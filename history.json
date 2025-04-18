@@ -1,0 +1,20 @@
+[
+  {
+    "user": "Ваня",
+    "tag": "ivanya13",
+    "number_of_bike": "2",
+    "batteries": "2",
+    "date_to_end": "2025-05-18 13:50",
+    "price_to_order": "15000",
+    "return_time": "2025-04-18 13:57"
+  },
+  {
+    "user": "Ваня",
+    "tag": "ivanya13",
+    "number_of_bike": "2",
+    "batteries": "1",
+    "date_to_end": "2025-04-25 14:39",
+    "price_to_order": "5000",
+    "return_time": "2025-04-18 14:40"
+  }
+]
