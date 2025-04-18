@@ -1,2 +1,2 @@
-worker: python bot1.py
-worker2: python bot2.python
+worker: python admin_bot.py
+worker2: python user_bot.py
