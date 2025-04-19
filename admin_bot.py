@@ -9,9 +9,9 @@ import time
 from supabase import create_client
 import requests
 
-SUPABASE_URL = os.getenv("https://bvngkihlvtarxgghqffr.supabase.com")
-SUPABASE_KEY = os.getenv("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ2bmdraWhsdnRhcnhnZ2hxZmZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDUwNTkyNDEsImV4cCI6MjA2MDYzNTI0MX0.lS-U84Vlqz4TFvABVJSNis9Vh31ECAj25x2QVpRqbrM")
-STORAGE_BUCKET = "queue.json" #это название бакета
+SUPABASE_URL = "https://bvngkihlvtarxgghqffr.supabase.co"
+SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ2bmdraWhsdnRhcnhnZ2hxZmZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDUwNTkyNDEsImV4cCI6MjA2MDYzNTI0MX0.lS-U84Vlqz4TFvABVJSNis9Vh31ECAj25x2QVpRqbrM'
+STORAGE_BUCKET = "bikes" #это название бакета
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
@@ -27,18 +27,36 @@ def get_file(file_name, default=[]):
         return default
 
 def save_file(file_name, data):
+    content = json.dumps(data, ensure_ascii=False, indent=2).encode('utf-8')
     try:
-        content = json.dumps(data, ensure_ascii=False, indent=2).encode('utf-8')
-        res = supabase.storage.from_(STORAGE_BUCKET).upload(
-            file_name,
-            content,
-            {"content-type": "application/json"}
-        )
-        if res.get('error'):
-            raise Exception(res['error'])
+        if file_exists(file_name):
+            # Если файл существует — обновляем
+            supabase.storage.from_(STORAGE_BUCKET).update(
+                file_name,
+                content,
+                {"content-type": "application/json"}
+            )
+            print(f"[save_file] Обновлён: {file_name}")
+        else:
+            # Иначе создаём новый
+            supabase.storage.from_(STORAGE_BUCKET).upload(
+                file_name,
+                content,
+                {"content-type": "application/json"}
+            )
+            print(f"[save_file] Загружен заново: {file_name}")
     except Exception as e:
-        print(f"[save_file] Ошибка сохранения {file_name}: {e}")
-        raise  # Перебрасываем исключение дальше
+        print(f"[save_file] Ошибка при сохранении {file_name}: {e}")
+        raise
+
+def file_exists(file_name):
+    try:
+        files = supabase.storage.from_(STORAGE_BUCKET).list()
+        return any(f['name'] == file_name for f in files)
+    except Exception as e:
+        print(f"Ошибка при проверке существования файла: {e}")
+        return False
+
 
 
 history = get_file("history.json")
@@ -648,24 +666,16 @@ def hash_data(data):
     return hashlib.md5(json.dumps(data, sort_keys=True).encode('utf-8')).hexdigest()
 def monitor_queue_file():
     global queue
-
-    try:
-        with open(queue, 'r', encoding='utf-8') as f:
-            last_data = json.load(f)
-            last_hash = hash_data(last_data)
-            last_len = len(last_data) 
-    except Exception as e:
-        print(f"[monitor_queue_file] Ошибка чтения: {e}")
-        return
+    last_hash = hash_data(queue)
+    last_len = len(queue)
 
     while True:
-        time.sleep(5) 
+        time.sleep(5)
 
         try:
-            with open(queue, 'r', encoding='utf-8') as f:
-                current_data = json.load(f)
-                current_hash = hash_data(current_data)
-                current_len = len(current_data)
+            current_queue = get_file("queue.json")
+            current_hash = hash_data(current_queue)
+            current_len = len(current_queue)
 
             if current_hash != last_hash:
                 if current_len > last_len:
@@ -674,14 +684,12 @@ def monitor_queue_file():
                         text="🔔 Добавлена новая заявка в очередь!"
                     )
 
-                queue = current_data
+                queue[:] = current_queue
                 last_hash = current_hash
                 last_len = current_len
 
         except Exception as e:
             print(f"[monitor_queue_file] Ошибка обработки: {e}")
-
-
 
 if __name__ == "__main__":
     threading.Thread(target=monitor_queue_file, daemon=True).start()
