@@ -3,59 +3,104 @@ from telebot import types
 import json
 import os
 from datetime import datetime
+from supabase import create_client
+import requests
 
-REVIEWS_URL = "https://bvngkihlvtarxgghqffr.supabase.co/storage/v1/object/sign/queue.json/reviews.json?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6InN0b3JhZ2UtdXJsLXNpZ25pbmcta2V5X2M1YTM4YWU1LWMzMzEtNGZkOC05NTY4LTcyNmM2NmY2MjRiOSJ9.eyJ1cmwiOiJxdWV1ZS5qc29uL3Jldmlld3MuanNvbiIsImlhdCI6MTc0NTA1OTk5MCwiZXhwIjozMzI4MTA1OTk5MH0.noxas2wzl-GpKAaKTAfpi11ZLQDR0jJ5oRXPUH3Xzo4"
+SUPABASE_URL = "https://bvngkihlvtarxgghqffr.supabase.co"
+SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ2bmdraWhsdnRhcnhnZ2hxZmZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDUwNTkyNDEsImV4cCI6MjA2MDYzNTI0MX0.lS-U84Vlqz4TFvABVJSNis9Vh31ECAj25x2QVpRqbrM'
+STORAGE_BUCKET = "bikes" #это название бакета
 
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# Текущая директория проекта
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+photo_extensions = ['.jpg', '.jpeg', '.png', '.webp']
+all_files = supabase.storage.from_(STORAGE_BUCKET).list()
+array_photos = [f['name'] for f in all_files if os.path.splitext(f['name'])[1].lower() in photo_extensions]
 
-# Пути к JSON-файлам
-TABLE_FILE = os.path.join(BASE_DIR, 'table.json')
-QUEUE_FILE = os.path.join(BASE_DIR, 'queue.json')
-REVIEWS_FILE = os.path.join(BASE_DIR, 'reviews.json')
-
-# Папка с фото
-array_photos = [
-    os.path.join(BASE_DIR, 'photos', 'photo_1.jpeg'),
-    os.path.join(BASE_DIR, 'photos', 'photo_2.jpeg'),
-    os.path.join(BASE_DIR, 'photos', 'photo_3.jpeg'),
-    os.path.join(BASE_DIR, 'photos', 'photo_4.jpeg'),
-    os.path.join(BASE_DIR, 'photos', 'photo_5.jpeg'),
-]
-
-# Создание JSON-файлов, если не существуют
-for file in [TABLE_FILE, QUEUE_FILE, REVIEWS_FILE]:
-    if not os.path.exists(file):
-        with open(file, 'w', encoding='utf-8') as f:
-            json.dump([], f, ensure_ascii=False, indent=2)
-
-# Загрузка JSON
-def load_json(file_path):
+def get_file(file_name, default=[]):
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        return []
+        response = supabase.storage.from_(STORAGE_BUCKET).download(file_name)
+        if response is None:
+            return default
+        data = json.loads(response.decode('utf-8'))
+        return data
+    except Exception as e:
+        print(f"[get_file] Ошибка чтения {file_name}: {e}")
+        return default
 
-# Загрузка данных
-table = load_json(TABLE_FILE)
-queue = load_json(QUEUE_FILE)
-reviews = load_json(REVIEWS_FILE)
+def save_file(file_name, data):
+    content = json.dumps(data, ensure_ascii=False, indent=2).encode('utf-8')
+    try:
+        if file_exists(file_name):
+            # Если файл существует — обновляем
+            supabase.storage.from_(STORAGE_BUCKET).update(
+                file_name,
+                content,
+                {"content-type": "application/json"}
+            )
+            print(f"[save_file] Обновлён: {file_name}")
+        else:
+            # Иначе создаём новый
+            supabase.storage.from_(STORAGE_BUCKET).upload(
+                file_name,
+                content,
+                {"content-type": "application/json"}
+            )
+            print(f"[save_file] Загружен заново: {file_name}")
+    except Exception as e:
+        print(f"[save_file] Ошибка при сохранении {file_name}: {e}")
+        raise
 
-# Сохранение
-def save_json(data, file_path):
-    with open(file_path, 'w', encoding='utf-8') as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
+def file_exists(file_name):
+    try:
+        files = supabase.storage.from_(STORAGE_BUCKET).list()
+        return any(f['name'] == file_name for f in files)
+    except Exception as e:
+        print(f"Ошибка при проверке существования файла: {e}")
+        return False
 
-def save_reviews():
-    save_json(reviews, REVIEWS_FILE)
+history = get_file("history.json")
+def save_history():
+    save_file('history.json', history)
 
+queue = get_file("queue.json")
 def save_queue():
-    save_json(queue, QUEUE_FILE)
+    save_file('queue.json', queue)
 
+table = get_file('table.json')
 def save_table():
-    save_json(table, TABLE_FILE)
+    save_file('table.json', table)
+
+order_in_processing = get_file("order_in_processing.json")
+def save_order_in_processing():
+    save_file('order_in_processing.json', order_in_processing)
+
+reviews = get_file("reviews")
+def save_reviews():
+    save_file('reviews', reviews)
+
+if not get_file("history.json"):
+    save_file("history.json", [])
+
+if not get_file("queue.json"):
+    save_file("queue.json", [])
+
+if not get_file("table.json"):
+    save_file("table.json", [])
+
+if not get_file("order_in_processing.json"):
+    save_file("order_in_processing.json", [])
+
+if not get_file("reviews.json"):
+    save_file("reviews.json", [])  
+
+
+def get_photo_bytes(photo_name):
+    try:
+        return supabase.storage.from_(STORAGE_BUCKET).download(photo_name)
+    except Exception as e:
+        print(f"Ошибка загрузки фото: {e}")
+        return None
+
 
 # Токен бота
 TOKEN = "7648025267:AAGkXss5g-EPy0hKZKkoImLkjiAoO6cGC1Y"
@@ -203,41 +248,45 @@ def parse_buttons(message: types.Message):
 Количество не ограничено, хоть 1, хоть 5.""", reply_markup=markup)
 
     elif message.text == "фотографии":
+        current_photo_num = 0
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
         markup.add(types.KeyboardButton("предыдущий снимок"), types.KeyboardButton("следующий снимок"))
         markup.add(types.KeyboardButton("назад"))
-        with open(array_photos[current_photo_num], 'rb') as photo:
-            bot.send_photo(message.chat.id, photo=photo, caption=f"Фото {current_photo_num + 1}/{len(array_photos)}", reply_markup=markup)
+
+        if array_photos:
+            photo_data = get_photo_bytes(array_photos[current_photo_num])
+            if photo_data:
+                bot.send_photo(message.chat.id, photo=photo_data, caption=f"Фото {current_photo_num + 1}/{len(array_photos)}", reply_markup=markup)
+            else:
+                bot.send_message(message.chat.id, "Не удалось загрузить фото.", reply_markup=markup)
+        else:
+            bot.send_message(message.chat.id, "Фотографии не найдены.", reply_markup=markup)
+
 
     elif message.text == "следующий снимок":
         current_photo_num = (current_photo_num + 1) % len(array_photos)
-        photo_path = array_photos[current_photo_num]
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
         markup.add(types.KeyboardButton("предыдущий снимок"), types.KeyboardButton("следующий снимок"))
         markup.add(types.KeyboardButton("назад"))
-        
-        with open(photo_path, 'rb') as photo:
-            bot.send_photo(
-                chat_id=message.chat.id,
-                photo=photo,
-                caption=f"Фото {current_photo_num + 1}/{len(array_photos)}",
-                reply_markup=markup
-            )
+
+        photo_data = get_photo_bytes(array_photos[current_photo_num])
+        if photo_data:
+            bot.send_photo(message.chat.id, photo=photo_data, caption=f"Фото {current_photo_num + 1}/{len(array_photos)}", reply_markup=markup)
+        else:
+            bot.send_message(message.chat.id, "Не удалось загрузить фото.", reply_markup=markup)
 
     elif message.text == "предыдущий снимок":
         current_photo_num = (current_photo_num - 1) % len(array_photos)
-        photo_path = array_photos[current_photo_num]
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
         markup.add(types.KeyboardButton("предыдущий снимок"), types.KeyboardButton("следующий снимок"))
         markup.add(types.KeyboardButton("назад"))
-        
-        with open(photo_path, 'rb') as photo:
-            bot.send_photo(
-                chat_id=message.chat.id,
-                photo=photo,
-                caption=f"Фото {current_photo_num + 1}/{len(array_photos)}",
-                reply_markup=markup
-            )
+
+        photo_data = get_photo_bytes(array_photos[current_photo_num])
+        if photo_data:
+            bot.send_photo(message.chat.id, photo=photo_data, caption=f"Фото {current_photo_num + 1}/{len(array_photos)}", reply_markup=markup)
+        else:
+            bot.send_message(message.chat.id, "Не удалось загрузить фото.", reply_markup=markup)
+
 
     elif message.text == "отзывы":
         current_review_num = 0
