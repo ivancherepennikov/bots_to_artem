@@ -251,60 +251,77 @@ def process_bike_rent(message: types.Message):
         order_number = temp_data[message.chat.id]['order_number']
         order = next((o for o in queue if int(o['order_number']) == order_number), None)
 
-        if order:
-            rent_start = datetime.now()
+        if not order:
+            bot.send_message(message.chat.id, "Заявка не найдена.")
+            return show_main_menu(message.chat.id)
 
-            try:
-                rent_days = int(order.get("tern_to_rent", "7").split()[0])
-            except (ValueError, IndexError):
-                rent_days = 7
+        rent_start = datetime.now()
 
-            rent_end = rent_start + timedelta(days=rent_days)
-            order["date_to_end"] = rent_end.strftime("%Y-%m-%d %H:%M")
-            bike["date_to_end"] = rent_end.strftime("%Y-%m-%d %H:%M")
+        try:
+            rent_days = int(order.get("tern_to_rent", "1").split()[0])
+        except (ValueError, IndexError):
+            rent_days = 1
 
-            # Создаём запись аренды (временно без цены, добавим позже)
-            new_order = {
-                "order_number": str(order_number),
-                "tern_to_rent": f"{rent_days}",
-                "number_of_bike": str(bike_number),
-                "user": order['user'],
-                "tag": order['tag'],
-                "date": order['date'],
-                "date_to_end": rent_end.strftime("%Y-%m-%d %H:%M"),
-                "price": None  
-            }
-
-            queue.append(new_order)
-
-            # Удаляем оригинальную заявку
-            queue = [q for q in queue if int(q['order_number']) != order_number]
-
-            # Сохраняем для дальнейшего шага (ввод цены)
-            temp_data[message.chat.id].update({
-                "bike_number": bike_number,
-                "user": order['user'],
-                "tag": order['tag'],
-                "date_to_end": rent_end.strftime("%Y-%m-%d %H:%M"),
-                "order_number": order_number
-            })
-
-        save_queue()
-        save_table()
-
-        if rent_days == 7:
-            price = 5000
-        elif rent_days == 14:
+        batteries = int(order.get("batteries", 1))
+        rent_end = rent_start + timedelta(days=rent_days)
+        
+        # Определяем цену по прайс-листу
+        if rent_days == 1 and batteries == 1:
+            price = 900
+        elif rent_days == 4 and batteries == 1:
+            price = 2300
+        elif rent_days == 7 and batteries == 1:
+            price = 3600
+        elif rent_days == 14 and batteries == 1:
+            price = 7100
+        elif rent_days == 20 and batteries == 1:
             price = 9000
-        elif rent_days == 30:
-            price = 15000
+        elif rent_days == 30 and batteries == 1:
+            price = 12500
+        elif rent_days == 1 and batteries == 2:
+            price = 1900
+        elif rent_days == 4 and batteries == 2:
+            price = 3300
+        elif rent_days == 7 and batteries == 2:
+            price = 4600
+        elif rent_days == 14 and batteries == 2:
+            price = 8100
+        elif rent_days == 20 and batteries == 2:
+            price = 10000
+        elif rent_days == 30 and batteries == 2:
+            price = 13500
+        elif batteries > 2:
+            base_prices = {
+                1: 1900,
+                4: 3300,
+                7: 4600,
+                14: 8100,
+                20: 10000,
+                30: 13500
+            }
+            price = base_prices.get(rent_days, 0) + (batteries - 2) * 50 * rent_days
         else:
             bot.send_message(
                 message.chat.id,
-                f"Неподдерживаемый срок аренды: {rent_days} дней. Укажи 7, 14 или 30."
+                "Неподдерживаемый срок аренды или количество батарей."
             )
             return show_main_menu(message.chat.id)
 
+        # Обновляем данные велосипеда
+        bike["date_to_end"] = rent_end.strftime("%Y-%m-%d %H:%M")
+
+        # Обновляем запись в очереди (а не в истории)
+        updated_order = {
+            "order_number": str(order_number),
+            "tern_to_rent": f"{rent_days}",
+            "number_of_bike": str(bike_number),
+            "user": order['user'],
+            "tag": order['tag'],
+            "date": order['date'],
+            "date_to_end": rent_end.strftime("%Y-%m-%d %H:%M"),
+            "price_to_order": str(price),
+            "batteries": str(batteries)
+        }
 
         # Добавляем заказ в работу
         order_in_processing.append({
@@ -313,22 +330,11 @@ def process_bike_rent(message: types.Message):
             "tag": order['tag'],
             "date_to_end": rent_end.strftime("%Y-%m-%d %H:%M"),
             "price": str(price),
-            "batteries": order.get("batteries", "1")  # по умолчанию 1, если не указано
+            "batteries": str(batteries)
         })
 
-        save_order_in_processing()
-
-        # Обновляем запись в истории очереди
-        queue.append({
-            "order_number": str(order_number),
-            "tern_to_rent": f"{rent_days}",
-            "number_of_bike": str(bike_number),
-            "user": order['user'],
-            "tag": order['tag'],
-            "date": order['date'],
-            "date_to_end": rent_end.strftime("%Y-%m-%d %H:%M"),
-            "price_to_order": str(price)
-        })
+        # Обновляем очередь (заменяем старую запись на обновленную)
+        queue = [updated_order if int(q['order_number']) == order_number else q for q in queue]
 
         # Обновляем прибыль у велосипеда
         for bike in table:
@@ -340,22 +346,31 @@ def process_bike_rent(message: types.Message):
                 bike["all_time_income"] = str(previous_income + price)
                 break
 
-        # Удаляем оригинальную заявку
-        queue = [q for q in queue if int(q['order_number']) != order_number]
-
+        # Сохраняем все изменения
         save_table()
         save_queue()
+        save_order_in_processing()
 
         bot.send_message(
             chat_id=message.chat.id,
-            text=f"Заказ на велосипед №{bike_number} оформлен. Аренда до {rent_end.strftime('%Y-%m-%d %H:%M')}, цена: {price} руб."
+            text=f"""
+✅ Заказ оформлен:
+Велосипед №{bike_number}
+Арендатор: @{order['tag']}
+Срок: {rent_days} дней
+Батареи: {batteries} шт.
+Окончание: {rent_end.strftime('%Y-%m-%d %H:%M')}
+Цена: {price} руб.
+"""
         )
         show_main_menu(message.chat.id)
-
 
     except ValueError:
         bot.send_message(message.chat.id, "Введите корректный номер велосипеда.")
         trade_state(message)
+    except Exception as e:
+        bot.send_message(message.chat.id, f"Произошла ошибка: {str(e)}")
+        show_main_menu(message.chat.id)
 
 
 def process_trade_input(message: types.Message):
