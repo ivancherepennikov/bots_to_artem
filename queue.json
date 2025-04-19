@@ -30,15 +30,6 @@
     "price_to_order": "14000"
   },
   {
-    "order_number": "6",
-    "tern_to_rent": "4",
-    "user": "Ваня",
-    "tag": "ivanya13",
-    "date": "2025-04-18 15:39",
-    "date_to_end": "с момента отдачи",
-    "price_to_order": "2700"
-  },
-  {
     "order_number": "7",
     "tern_to_rent": "20",
     "batteries": "1",
