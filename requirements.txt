@@ -25,4 +25,3 @@ urllib3==2.4.0
 wrapt==1.17.2
 yookassa==3.5.0
 supabase==2.2.1
-python-dotenv==1.0.1
