@@ -7,16 +7,19 @@ import threading
 import hashlib
 import time 
 from supabase import create_client
+import requests
 
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-STORAGE_BUCKET = "bike-rent-data"
+SUPABASE_URL = os.getenv("https://bvngkihlvtarxgghqffr.supabase.com")
+SUPABASE_KEY = os.getenv("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ2bmdraWhsdnRhcnhnZ2hxZmZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDUwNTkyNDEsImV4cCI6MjA2MDYzNTI0MX0.lS-U84Vlqz4TFvABVJSNis9Vh31ECAj25x2QVpRqbrM")
+STORAGE_BUCKET = "queue.json" #это название бакета
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 def get_file(file_name, default=[]):
     try:
         response = supabase.storage.from_(STORAGE_BUCKET).download(file_name)
+        if response is None:
+            return default
         data = json.loads(response.decode('utf-8'))
         return data
     except Exception as e:
@@ -26,26 +29,45 @@ def get_file(file_name, default=[]):
 def save_file(file_name, data):
     try:
         content = json.dumps(data, ensure_ascii=False, indent=2).encode('utf-8')
-        supabase.storage.from_(STORAGE_BUCKET).upload_or_update(file_name, content)
+        res = supabase.storage.from_(STORAGE_BUCKET).upload(
+            file_name,
+            content,
+            {"content-type": "application/json"}
+        )
+        if res.get('error'):
+            raise Exception(res['error'])
     except Exception as e:
         print(f"[save_file] Ошибка сохранения {file_name}: {e}")
+        raise  # Перебрасываем исключение дальше
 
-history = get_file('history.json')
-order_in_processing = get_file('order_in_processing.json')
-queue = get_file('queue.json')
-table = get_file('table.json')
 
+history = get_file("history.json")
 def save_history():
-    save_file("history.json", history)
+    save_file('history.json', history)
 
+queue = get_file("queue.json")
 def save_queue():
-    save_file("queue.json", history)
+    save_file('queue.json', queue)
 
+table = get_file('table.json')
 def save_table():
-    save_file("table.json", history)
+    save_file('table.json', table)
 
+order_in_processing = get_file("order_in_processing.json")
 def save_order_in_processing():
-    save_file("order_in_processing.json", history)
+    save_file('order_in_processing.json', order_in_processing)
+
+if not get_file("history.json"):
+    save_file("history.json", [])
+
+if not get_file("queue.json"):
+    save_file("queue.json", [])
+
+if not get_file("table.json"):
+    save_file("table.json", [])
+
+if not get_file("order_in_processing.json"):
+    save_file("order_in_processing.json", [])
 
 TOKEN = "7719626488:AAEeZ_k1YVfoOjzxfwZZUqpeYyQwdaCkKtY"
 bot = telebot.TeleBot(TOKEN)
