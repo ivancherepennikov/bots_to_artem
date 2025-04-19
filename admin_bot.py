@@ -6,45 +6,46 @@ from datetime import datetime, timedelta
 import threading
 import hashlib
 import time 
+from supabase import create_client
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+STORAGE_BUCKET = "bike-rent-data"
 
-HISTORY_FILE = os.path.join(BASE_DIR, 'history.json')
-ORDER_IN_PROCESSING_FILE = os.path.join(BASE_DIR, 'order_in_processing.json')
-QUEUE_FILE = os.path.join(BASE_DIR, 'queue.json')
-TABLE_FILE = os.path.join(BASE_DIR, 'table.json')
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-def load_json(file_path, default=[]):
+def get_file(file_name, default=[]):
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
+        response = supabase.storage.from_(STORAGE_BUCKET).download(file_name)
+        data = json.loads(response.decode('utf-8'))
+        return data
+    except Exception as e:
+        print(f"[get_file] Ошибка чтения {file_name}: {e}")
         return default
 
-def save_json(file_path, data):
+def save_file(file_name, data):
     try:
-        with open(file_path, 'w', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
+        content = json.dumps(data, ensure_ascii=False, indent=2).encode('utf-8')
+        supabase.storage.from_(STORAGE_BUCKET).upload_or_update(file_name, content)
     except Exception as e:
-        print(f"[save_json] Ошибка при сохранении {file_path}: {e}")
+        print(f"[save_file] Ошибка сохранения {file_name}: {e}")
 
-history = load_json(HISTORY_FILE)
-order_in_processing = load_json(ORDER_IN_PROCESSING_FILE)
-queue = load_json(QUEUE_FILE)
-table = load_json(TABLE_FILE)
+history = get_file('history.json')
+order_in_processing = get_file('order_in_processing.json')
+queue = get_file('queue.json')
+table = get_file('table.json')
 
 def save_history():
-    save_json(HISTORY_FILE, history)
-
-def save_order_in_processing():
-    save_json(ORDER_IN_PROCESSING_FILE, order_in_processing)
+    save_file("history.json", history)
 
 def save_queue():
-    save_json(QUEUE_FILE, queue)
+    save_file("queue.json", history)
 
 def save_table():
-    save_json(TABLE_FILE, table)
+    save_file("table.json", history)
 
+def save_order_in_processing():
+    save_file("order_in_processing.json", history)
 
 TOKEN = "7719626488:AAEeZ_k1YVfoOjzxfwZZUqpeYyQwdaCkKtY"
 bot = telebot.TeleBot(TOKEN)
@@ -627,7 +628,7 @@ def monitor_queue_file():
     global queue
 
     try:
-        with open(QUEUE_FILE, 'r', encoding='utf-8') as f:
+        with open(queue, 'r', encoding='utf-8') as f:
             last_data = json.load(f)
             last_hash = hash_data(last_data)
             last_len = len(last_data) 
@@ -639,7 +640,7 @@ def monitor_queue_file():
         time.sleep(5) 
 
         try:
-            with open(QUEUE_FILE, 'r', encoding='utf-8') as f:
+            with open(queue, 'r', encoding='utf-8') as f:
                 current_data = json.load(f)
                 current_hash = hash_data(current_data)
                 current_len = len(current_data)
