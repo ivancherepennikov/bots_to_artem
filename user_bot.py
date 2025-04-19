@@ -4,6 +4,9 @@ import json
 import os
 from datetime import datetime
 
+REVIEWS_URL = "https://bvngkihlvtarxgghqffr.supabase.co/storage/v1/object/sign/queue.json/reviews.json?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6InN0b3JhZ2UtdXJsLXNpZ25pbmcta2V5X2M1YTM4YWU1LWMzMzEtNGZkOC05NTY4LTcyNmM2NmY2MjRiOSJ9.eyJ1cmwiOiJxdWV1ZS5qc29uL3Jldmlld3MuanNvbiIsImlhdCI6MTc0NTA1OTk5MCwiZXhwIjozMzI4MTA1OTk5MH0.noxas2wzl-GpKAaKTAfpi11ZLQDR0jJ5oRXPUH3Xzo4"
+
+
 # Текущая директория проекта
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
