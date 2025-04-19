@@ -292,13 +292,19 @@ def process_bike_rent(message: types.Message):
         save_queue()
         save_table()
 
-        # Устанавливаем цену в зависимости от срока
         if rent_days == 7:
             price = 5000
         elif rent_days == 14:
             price = 9000
         elif rent_days == 30:
             price = 15000
+        else:
+            bot.send_message(
+                message.chat.id,
+                f"Неподдерживаемый срок аренды: {rent_days} дней. Укажи 7, 14 или 30."
+            )
+            return show_main_menu(message.chat.id)
+
 
         # Добавляем заказ в работу
         order_in_processing.append({
