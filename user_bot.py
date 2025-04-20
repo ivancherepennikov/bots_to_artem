@@ -225,8 +225,8 @@ def start(message: types.Message):
 
 @bot.message_handler(commands=['help'])
 def help(message: types.Message):
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True),
-    markup.add(types.KeyboardButton("назад"))
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    markup.add(types.KeyboardButton("заказ"))
     bot.send_message(
         chat_id=message.chat.id,
         text = """это информационное сообщение с прайслитом
