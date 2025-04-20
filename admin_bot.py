@@ -279,27 +279,27 @@ def process_bike_rent(message: types.Message):
         elif rent_days == 30 and batteries == 1:
             price = 12500
         elif rent_days == 1 and batteries == 2:
-            price = 1900
+            price = 1000
         elif rent_days == 4 and batteries == 2:
-            price = 3300
+            price = 2700
         elif rent_days == 7 and batteries == 2:
-            price = 4600
+            price = 4300
         elif rent_days == 14 and batteries == 2:
-            price = 8100
+            price = 8000
         elif rent_days == 20 and batteries == 2:
             price = 10000
         elif rent_days == 30 and batteries == 2:
-            price = 13500
+            price = 14000
         elif batteries > 2:
             base_prices = {
-                1: 1900,
-                4: 3300,
-                7: 4600,
-                14: 8100,
+                1: 1000,
+                4: 2700,
+                7: 4300,
+                14: 8000,
                 20: 10000,
-                30: 13500
+                30: 14000
             }
-            price = base_prices.get(rent_days, 0) + (batteries - 2) * 50 * rent_days
+            price = base_prices.get(rent_days, 0) + (batteries - 2) * 100 * rent_days
         else:
             bot.send_message(
                 message.chat.id,

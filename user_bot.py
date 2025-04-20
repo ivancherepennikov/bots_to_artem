@@ -217,9 +217,30 @@ def start(message: types.Message):
     bot.send_message(
         chat_id=message.chat.id, 
         text=f"""Привет, {message.from_user.first_name}!
-Я бот канала Кузнецов и Володин))
-Мы занимаемся сдачей электровелосипедов для курьеров в аренду""",
+Я бот по сдаче электор велосипедов Jatson в аренду для курьеров и не только
+если тебе нужна информация по нашим ценам, то отправляй в бота команду /help
+удачного пользования!""",
         reply_markup=markup
+    )
+
+@bot.message_handler(commands=['help'])
+def help(message: types.Message):
+    markup = message.chat.id,
+    markup.add(types.KeyboardButton("назад"))
+    bot.send_message(
+        chat_id=message.chat.id,
+        text = """это информационное сообщение с прайслитом
+вы можете взять у нас велосипед в аренду, права на него не нужны
+мы предлагаем следущие тарифы:
+дни    с одним акб    с двумя акб
+ 1         900р          1000р
+ 4        2300р          2700р
+ 7        3600р          4300р
+ 14       7100р          8000р
+ 20       9000р         10000р
+ 30      12500р         14000р
+если вам понадобится большее количество акб, то цена будет рассчитываться по формуле:
+цена = цена (с двумя акб) + 100*количесто доп акб"""
     )
 
 @bot.message_handler(content_types=['text'])
@@ -399,25 +420,25 @@ def parse_buttons(message: types.Message):
         elif days == 30 and batteries == 1:
             price = 12500
         elif days == 1 and batteries == 2:
-            price = 1900
+            price = 1000
         elif days == 4 and batteries == 2:
-            price = 3300
+            price = 2700
         elif days == 7 and batteries == 2:
-            price = 4600
+            price = 4300
         elif days == 14 and batteries == 2:
-            price = 8100
+            price = 8000
         elif days == 20 and batteries == 2:
             price = 10000
         elif days == 30 and batteries == 2:
-            price = 13500
+            price = 14000
         elif batteries > 2:
             base_prices = {
-                1: 1900,
-                4: 3300,
-                7: 4600,
-                14: 8100,
+                1: 1000,
+                4: 2700,
+                7: 4300,
+                14: 8000,
                 20: 10000,
-                30: 13500
+                30: 14000
             }
             price = base_prices.get(days, 0) + (batteries - 2) * 50 * days
         else:
