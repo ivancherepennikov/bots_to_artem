@@ -259,18 +259,24 @@ def parse_buttons(message: types.Message):
     elif message.text == "FAQ":
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
         markup.add(types.KeyboardButton("назад"))
+
         text = (
             "*1\\. Нужны ли права на ваши электровелосипеды?*\n"
             "Нет, все электровелосипеды по документам 240 Ватт\\.\n\n"
+
             "*2\\. Есть ли у Вас залог?*\n"
             "Нет, аренда осуществляется по договору\\.\n\n"
+
             "*3\\. Должен ли я платить, если электровелосипед сломается?*\n"
             "Износ деталей — бесплатно\\.\n"
             "Поломки по вине арендатора — оплачиваются согласно договору\\.\n\n"
+
             "*4\\. На сколько хватает заряда аккумулятора?*\n"
-            "Все зависит от стиля езды. От 40км до 70.\\.\n\n"
+            "Все зависит от стиля езды: от 40 до 70 км\\.\n\n"
+
             "*5\\. Сколько аккумуляторов я могу взять?*\n"
             "Сколько угодно: 1, 2, 3 и т\\.д\\.\n\n"
+
             "Если остались вопросы — пишите нашим менеджерам:\n"
             "[Артем](https://t.me/temaLiberty) и [Егор](https://t.me/egoorst)"
         )
@@ -279,7 +285,7 @@ def parse_buttons(message: types.Message):
             message.chat.id,
             text,
             parse_mode="MarkdownV2",
-            disable_web_page_preview=True,  # ← вот это убирает ссылку-снизу
+            disable_web_page_preview=True,  # ← это убирает ссылку-снизу
             reply_markup=markup
         )
 
