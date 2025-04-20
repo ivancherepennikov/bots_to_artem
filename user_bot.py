@@ -225,7 +225,7 @@ def start(message: types.Message):
 
 @bot.message_handler(commands=['help'])
 def help(message: types.Message):
-    markup = message.chat.id,
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True),
     markup.add(types.KeyboardButton("назад"))
     bot.send_message(
         chat_id=message.chat.id,
@@ -240,7 +240,8 @@ def help(message: types.Message):
  20       9000р         10000р
  30      12500р         14000р
 если вам понадобится большее количество акб, то цена будет рассчитываться по формуле:
-цена = цена (с двумя акб) + 100*количесто доп акб"""
+цена = цена (с двумя акб) + 100*количесто доп акб""",
+        reply_markup=markup,
     )
 
 @bot.message_handler(content_types=['text'])
