@@ -269,7 +269,9 @@ def parse_buttons(message: types.Message):
 4. other 
 5. ```Сколько аккумуляторов я могу взять? ```
 Количество не ограничено, хоть 1, хоть 5.
-если у вас еще остались вопросы, пишите нашим менеджерам [Артем](@temaLiberty) и [Егор](@egoorst)""", reply_markup=markup)
+если у вас еще остались вопросы, пишите нашим менеджерам [Артем](@temaLiberty) и [Егор](@egoorst)""",
+        parse_mode="MarkdownV2",
+        reply_markup=markup)
 
     elif message.text == "фотографии":
         current_photo_num = 0
