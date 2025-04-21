@@ -681,6 +681,10 @@ def add(message: types.Message):
 # Укажи ID пользователя, которому отправлять уведомления
 # работает только в ирл
 ADMIN_CHAT_ID = 1320878937  # заменишь на свой chat_id
+ADMIN_CHAT_ID_EGOR = 5094974497
+ADMIN_CHAT_ID_ARTEM = 770117226
+ADMINS_ID = []
+ADMINS_ID.append(ADMIN_CHAT_ID, ADMIN_CHAT_ID_EGOR, ADMIN_CHAT_ID_ARTEM)
 
 def hash_data(data):
     """Создает хеш от данных для отслеживания изменений"""
@@ -700,10 +704,11 @@ def monitor_queue_file():
 
             if current_hash != last_hash:
                 if current_len > last_len:
-                    bot.send_message(
-                        chat_id=ADMIN_CHAT_ID,
-                        text="🔔 Добавлена новая заявка в очередь!"
-                    )
+                    for admin_id in ADMINS_ID:
+                        bot.send_message(
+                            chat_id=admin_id,
+                            text="🔔 Добавлена новая заявка в очередь!"
+                        )
 
                 queue[:] = current_queue
                 last_hash = current_hash
