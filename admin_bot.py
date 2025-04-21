@@ -684,7 +684,9 @@ ADMIN_CHAT_ID = 1320878937  # заменишь на свой chat_id
 ADMIN_CHAT_ID_EGOR = 5094974497
 ADMIN_CHAT_ID_ARTEM = 770117226
 ADMINS_ID = []
-ADMINS_ID.append(ADMIN_CHAT_ID, ADMIN_CHAT_ID_EGOR, ADMIN_CHAT_ID_ARTEM)
+ADMINS_ID.append(ADMIN_CHAT_ID)
+ADMINS_ID.append(ADMIN_CHAT_ID_ARTEM)
+ADMINS_ID.append(ADMIN_CHAT_ID_EGOR)
 
 def hash_data(data):
     """Создает хеш от данных для отслеживания изменений"""
