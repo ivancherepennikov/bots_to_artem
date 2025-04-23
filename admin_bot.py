@@ -269,23 +269,23 @@ def process_bike_rent(message: types.Message):
         if rent_days == 1 and batteries == 1:
             price = 900
         elif rent_days == 4 and batteries == 1:
-            price = 2300
+            price = 2500
         elif rent_days == 7 and batteries == 1:
-            price = 3600
+            price = 4000
         elif rent_days == 14 and batteries == 1:
             price = 7100
         elif rent_days == 20 and batteries == 1:
-            price = 9000
+            price = 9500
         elif rent_days == 30 and batteries == 1:
-            price = 12500
+            price = 13500
         elif rent_days == 1 and batteries == 2:
             price = 1000
         elif rent_days == 4 and batteries == 2:
             price = 2700
         elif rent_days == 7 and batteries == 2:
-            price = 4300
+            price = 4200
         elif rent_days == 14 and batteries == 2:
-            price = 8000
+            price = 7500
         elif rent_days == 20 and batteries == 2:
             price = 10000
         elif rent_days == 30 and batteries == 2:
@@ -294,8 +294,8 @@ def process_bike_rent(message: types.Message):
             base_prices = {
                 1: 1000,
                 4: 2700,
-                7: 4300,
-                14: 8000,
+                7: 4200,
+                14: 7500,
                 20: 10000,
                 30: 14000
             }

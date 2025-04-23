@@ -159,28 +159,28 @@ def process_rent_request(message: types.Message, days: int, batteries: int):
     # Прайслист
     if batteries > 2:
         base_prices = {
-            1: 1900,
-            4: 3300,
-            7: 4600,
-            14: 8100,
+            1: 1000,
+            4: 2700,
+            7: 4200,
+            14: 7500,
             20: 10000,
-            30: 13500
+            30: 14000
         }
         price = base_prices.get(days, 0) + (batteries - 2) * 50 * days
     else:
         price_table = {
             (1, 1): 900,
-            (4, 1): 2300,
-            (7, 1): 3600,
+            (4, 1): 2500,
+            (7, 1): 4000,
             (14, 1): 7100,
-            (20, 1): 9000,
-            (30, 1): 12500,
-            (1, 2): 1900,
-            (4, 2): 3300,
-            (7, 2): 4600,
-            (14, 2): 8100,
+            (20, 1): 9500,
+            (30, 1): 13500,
+            (1, 2): 1000,
+            (4, 2): 2700,
+            (7, 2): 4200,
+            (14, 2): 7500,
             (20, 2): 10000,
-            (30, 2): 13500
+            (30, 2): 14000
         }
         price = price_table.get((days, batteries), 0)
 
@@ -235,11 +235,11 @@ def help(message: types.Message):
 мы предлагаем следущие тарифы:
 дни    с одним акб    с двумя акб
   1              900р           1000р
-  4           2300р           2700р
-  7           3600р           4300р
- 14           7100р           8000р
- 20          9000р         10000р
- 30        12500р         14000р
+  4           2500р           2700р
+  7           4000р           4200р
+ 14           7100р           7500р
+ 20          9500р         10000р
+ 30        13500р         14000р
 если вам понадобится большее количество акб, то цена будет рассчитываться по формуле:
 цена = цена (с двумя акб) + 100 * количесто доп акб * количество дней
 если у вас еще остались вопросы посмотрите раздел FAQ""",
@@ -433,23 +433,23 @@ def parse_buttons(message: types.Message):
         if days == 1 and batteries == 1:
             price = 900
         elif days == 4 and batteries == 1:
-            price = 2300
+            price = 2500
         elif days == 7 and batteries == 1:
-            price = 3600
+            price = 4000
         elif days == 14 and batteries == 1:
             price = 7100
         elif days == 20 and batteries == 1:
-            price = 9000
+            price = 9500
         elif days == 30 and batteries == 1:
-            price = 12500
+            price = 13500
         elif days == 1 and batteries == 2:
             price = 1000
         elif days == 4 and batteries == 2:
             price = 2700
         elif days == 7 and batteries == 2:
-            price = 4300
+            price = 4200
         elif days == 14 and batteries == 2:
-            price = 8000
+            price = 7500
         elif days == 20 and batteries == 2:
             price = 10000
         elif days == 30 and batteries == 2:
@@ -458,8 +458,8 @@ def parse_buttons(message: types.Message):
             base_prices = {
                 1: 1000,
                 4: 2700,
-                7: 4300,
-                14: 8000,
+                7: 4200,
+                14: 7500,
                 20: 10000,
                 30: 14000
             }
